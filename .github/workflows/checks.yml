@@ -1,0 +1,37 @@
+name: Checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: test -z "$(gofmt -l cmd internal)"
+      - run: go vet ./...
+      - run: go test -race -cover ./...
+      - run: go install golang.org/x/vuln/cmd/govulncheck@latest && govulncheck ./...
+  docker-demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/setup.py
+      - run: docker compose up --build -d
+      - name: Wait for gateway
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8085/health; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - run: python3 scripts/demo.py
+      - name: Validate and reload policy
+        run: docker compose exec -T gateway gateway check && docker compose kill -s SIGHUP gateway
+      - run: python3 scripts/demo.py
+      - if: always()
+        run: docker compose logs && docker compose down

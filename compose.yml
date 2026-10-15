@@ -1,0 +1,45 @@
+services:
+  gateway:
+    build: .
+    environment:
+      LISTEN_ADDR: 0.0.0.0:8085
+      JWT_PUBLIC_KEY_FILE: /run/keys/public.pem
+      JWT_ISSUER: ${JWT_ISSUER:?Run python3 scripts/setup.py}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:?Run python3 scripts/setup.py}
+      UPSTREAM_KEYS_JSON: ${UPSTREAM_KEYS_JSON:?Run python3 scripts/setup.py}
+    volumes:
+      - ./.local/public.pem:/run/keys/public.pem:ro
+      - ./config:/app/config:ro
+    ports:
+      - "127.0.0.1:8085:8085"
+    depends_on: [billing, hr]
+    networks: [edge, services]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+  billing:
+    build: .
+    command: billing
+    environment:
+      LISTEN_ADDR: 0.0.0.0:9090
+      SERVICE_NAME: billing
+      INTERNAL_SIGNING_KEY: ${BILLING_SIGNING_KEY:?Run python3 scripts/setup.py}
+    networks: [services]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+  hr:
+    build: .
+    command: billing
+    environment:
+      LISTEN_ADDR: 0.0.0.0:9090
+      SERVICE_NAME: hr
+      INTERNAL_SIGNING_KEY: ${HR_SIGNING_KEY:?Run python3 scripts/setup.py}
+    networks: [services]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+networks:
+  edge:
+  services:
+    internal: true

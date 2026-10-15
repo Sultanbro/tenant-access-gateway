@@ -1,0 +1,242 @@
+{
+  "version": "demo-v1",
+  "services": {
+    "billing": {
+      "upstream": "http://billing:9090",
+      "routes": [
+        {
+          "method": "GET",
+          "path": "/invoices",
+          "resource": "invoices",
+          "action": "read"
+        },
+        {
+          "method": "POST",
+          "path": "/invoices",
+          "resource": "invoices",
+          "action": "create"
+        },
+        {
+          "method": "GET",
+          "path": "/invoices/{id}",
+          "resource": "invoices",
+          "action": "read"
+        },
+        {
+          "method": "PUT",
+          "path": "/invoices/{id}",
+          "resource": "invoices",
+          "action": "update"
+        },
+        {
+          "method": "PATCH",
+          "path": "/invoices/{id}",
+          "resource": "invoices",
+          "action": "update"
+        },
+        {
+          "method": "DELETE",
+          "path": "/invoices/{id}",
+          "resource": "invoices",
+          "action": "delete"
+        }
+      ]
+    },
+    "hr": {
+      "upstream": "http://hr:9090",
+      "routes": [
+        {
+          "method": "GET",
+          "path": "/employees",
+          "resource": "employees",
+          "action": "read"
+        }
+      ]
+    }
+  },
+  "tenants": {
+    "acme": {
+      "services": [
+        "billing",
+        "hr"
+      ],
+      "scopes": {
+        "root": "",
+        "division": "root",
+        "team-a": "division",
+        "team-b": "division"
+      },
+      "roles": {
+        "reader": {
+          "inherits": [],
+          "permissions": [
+            {
+              "service": "billing",
+              "resource": "invoices",
+              "action": "read",
+              "effect": "allow"
+            }
+          ]
+        },
+        "editor": {
+          "inherits": [
+            "reader"
+          ],
+          "permissions": [
+            {
+              "service": "billing",
+              "resource": "invoices",
+              "action": "create",
+              "effect": "allow"
+            },
+            {
+              "service": "billing",
+              "resource": "invoices",
+              "action": "update",
+              "effect": "allow"
+            }
+          ]
+        },
+        "manager": {
+          "inherits": [
+            "editor"
+          ],
+          "permissions": [
+            {
+              "service": "billing",
+              "resource": "invoices",
+              "action": "delete",
+              "effect": "allow"
+            }
+          ]
+        },
+        "no-delete": {
+          "inherits": [],
+          "permissions": [
+            {
+              "service": "*",
+              "resource": "*",
+              "action": "delete",
+              "effect": "deny"
+            }
+          ]
+        },
+        "hr-reader": {
+          "inherits": [],
+          "permissions": [
+            {
+              "service": "hr",
+              "resource": "employees",
+              "action": "read",
+              "effect": "allow"
+            }
+          ]
+        }
+      },
+      "bindings": [
+        {
+          "subject": "alice",
+          "role": "reader",
+          "scope": "division",
+          "descendants": true
+        },
+        {
+          "subject": "bob",
+          "role": "editor",
+          "scope": "team-a",
+          "descendants": false
+        },
+        {
+          "subject": "carol",
+          "role": "manager",
+          "scope": "root",
+          "descendants": true
+        },
+        {
+          "subject": "carol",
+          "role": "no-delete",
+          "scope": "team-a",
+          "descendants": false
+        },
+        {
+          "subject": "helen",
+          "role": "hr-reader",
+          "scope": "root",
+          "descendants": true
+        }
+      ]
+    },
+    "globex": {
+      "services": [
+        "billing"
+      ],
+      "scopes": {
+        "root": ""
+      },
+      "roles": {
+        "reader": {
+          "inherits": [],
+          "permissions": [
+            {
+              "service": "billing",
+              "resource": "invoices",
+              "action": "read",
+              "effect": "allow"
+            }
+          ]
+        },
+        "editor": {
+          "inherits": [
+            "reader"
+          ],
+          "permissions": [
+            {
+              "service": "billing",
+              "resource": "invoices",
+              "action": "create",
+              "effect": "allow"
+            },
+            {
+              "service": "billing",
+              "resource": "invoices",
+              "action": "update",
+              "effect": "allow"
+            }
+          ]
+        },
+        "manager": {
+          "inherits": [
+            "editor"
+          ],
+          "permissions": [
+            {
+              "service": "billing",
+              "resource": "invoices",
+              "action": "delete",
+              "effect": "allow"
+            }
+          ]
+        },
+        "no-delete": {
+          "inherits": [],
+          "permissions": [
+            {
+              "service": "*",
+              "resource": "*",
+              "action": "delete",
+              "effect": "deny"
+            }
+          ]
+        }
+      },
+      "bindings": [
+        {
+          "subject": "alice",
+          "role": "manager",
+          "scope": "root",
+          "descendants": false
+        }
+      ]
+    }
+  }
+}
